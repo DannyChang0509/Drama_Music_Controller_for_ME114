@@ -12,7 +12,7 @@ from mutagen.mp3 import MP3
 
 #GUI window setting
 root = Tk()
-root.title("Drama Music Controller")
+root.title("抓馬盃音控軟體")
 root.geometry("1050x500")
 
 #Init pygame mixer for play music
@@ -208,11 +208,30 @@ def add_bgm():
     bgms = filedialog.askopenfilenames(initialdir='./music/', title="Choose a BGM", filetypes=(("mp3 Files", "*.mp3"), ))
     for bgm in bgms:
         bgm_box.insert(END, bgm)
+        BGM.append(bgm)
+    file = open('./music.dat', mode='w')
+    file.write('BGM\n')
+    for s in BGM:
+        file.write(s+'\n')
+    file.write('SE\n')
+    for s in SE:
+        file.write(s+'\n')
+    file.close()
 
 
 def remove_bgm():
     bgm_stop()
+    BGM.remove(bgm_box.get(ACTIVE))
     bgm_box.delete(ANCHOR)
+    
+    file = open('./music.dat', mode='w')
+    file.write('BGM\n')
+    for s in BGM:
+        file.write(s+'\n')
+    file.write('SE\n')
+    for s in SE:
+        file.write(s+'\n')
+    file.close()
 
 
 def bgm_volume(x):
@@ -225,11 +244,30 @@ def add_se():
     ses = filedialog.askopenfilenames(initialdir='./music/', title="Choose a SE", filetypes=(("mp3 Files", "*.mp3"), ))
     for se in ses:
         se_box.insert(END, se)
+        SE.append(se)
+    file = open('./music.dat', mode='w')
+    file.write('BGM\n')
+    for s in BGM:
+        file.write(s+'\n')
+    file.write('SE\n')
+    for s in SE:
+        file.write(s+'\n')
+    file.close()
 
 
 def remove_se():
     se_stop()
+    SE.remove(se_box.get(ACTIVE))
     se_box.delete(ANCHOR)
+    
+    file = open('./music.dat', mode='w')
+    file.write('BGM\n')
+    for s in BGM:
+        file.write(s+'\n')
+    file.write('SE\n')
+    for s in SE:
+        file.write(s+'\n')
+    file.close()
 
 
 def se_volume(x):
@@ -258,6 +296,32 @@ bgm_box.grid(row=1, column=0, pady=10)
 
 se_box = Listbox(se_frame, width=50)
 se_box.grid(row=1, column=0, pady=10)
+
+#Insert music to music box
+file = open('./music.dat', mode='r')
+
+music = file.readlines()
+
+BGM = []
+SE = []
+
+i = ''
+
+for s in music:
+    s = s.strip()
+    if s == 'BGM':
+        i = 'b'
+    elif s =='SE':
+        i = 's'
+    else:
+        if i == 'b':
+            bgm_box.insert(END, s)
+            BGM.append(s)
+        elif i == 's':
+            se_box.insert(END, s)
+            SE.append(s)
+    
+file.close()
 
 #Create controllers' frame
 bgm_controls_frame = Frame(bgm_frame)
