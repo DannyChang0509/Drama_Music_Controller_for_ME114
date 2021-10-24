@@ -7,6 +7,8 @@ from tkinter import *
 import tkinter.ttk as ttk
 from tkinter import filedialog
 import pygame
+import time
+from mutagen.mp3 import MP3
 
 #GUI window setting
 root = Tk()
@@ -17,11 +19,87 @@ root.geometry("1050x500")
 pygame.mixer.init()
 
 
+def bgm_play_time():
+    if bgm_stopped:
+        return
+    
+    current_time = play.get_length()
+    current_time_f = time.strftime('%M:%S', time.gmtime(int(current_time)))
+    
+    song = bgm_box.get(ACTIVE)
+    song_mut = MP3(song)
+    
+    song_length = song_mut.info.length
+    song_length_f = time.strftime('%M:%S', time.gmtime(song_length))
+    
+    current_time += 1
+    
+    if int(bgm_time_slider.get()) == int(song_length):
+        bgm_status_bar.config(text=f'{song_length_f} of {song_length_f}')
+        bgm_stop()
+    elif paused:
+        pass
+    elif int(bgm_time_slider.get()) == int(current_time):
+        bgm_time_slider.config(to=int(song_length), value=int(current_time))
+    else:
+        bgm_time_slider.config(to=int(song_length), value=int(bgm_time_slider.get()))
+        
+        current_time_f = time.strftime('%M:%S', time.gmtime(int(bgm_time_slider.get())))
+        
+        bgm_time_slider.config(to=int(song_length), value=int(bgm_time_slider.get())+1)
+    
+        bgm_status_bar.config(text=f'{current_time_f} of {song_length_f}')
+    
+    bgm_status_bar.after(1000, bgm_play_time)
+
+
+def se_play_time():
+    if se_stopped:
+        return
+    
+    current_time = pygame.mixer.music.get_pos() / 1000
+    current_time_f = time.strftime('%M:%S', time.gmtime(int(current_time)))
+    
+    song = se_box.get(ACTIVE)
+    song_mut = MP3(song)
+    
+    song_length = song_mut.info.length
+    song_length_f = time.strftime('%M:%S', time.gmtime(song_length))
+    
+    current_time += 1
+    
+    if int(se_time_slider.get()) == int(song_length):
+        se_status_bar.config(text=f'{song_length_f} of {song_length_f}')
+        se_stop()
+    elif int(se_time_slider.get()) == int(current_time):
+        se_time_slider.config(to=int(song_length), value=int(current_time))
+    else:
+        se_time_slider.config(to=int(song_length), value=int(se_time_slider.get()))
+        
+        current_time_f = time.strftime('%M:%S', time.gmtime(int(se_time_slider.get())))
+        
+        se_time_slider.config(to=int(song_length), value=int(se_time_slider.get())+1)
+    
+        se_status_bar.config(text=f'{current_time_f} of {song_length_f}')
+    
+    se_status_bar.after(1000, se_play_time)
+
+
 def bgm_play():
+    bgm_stop()
+    
+    global bgm_stopped
+    bgm_stopped = False
+    
     bgm = bgm_box.get(ACTIVE)
     global play
     play = pygame.mixer.Sound(bgm)
     play.play()
+    
+    bgm_status_bar.config(text='')
+    bgm_time_slider.config(value=0)
+    
+    bgm_play_time()
 
 
 global paused
@@ -40,53 +118,90 @@ def bgm_pause(is_paused):
         paused = True
 
 
-global stopped
-stopped = False
+global bgm_stopped
+bgm_stopped = False
 
 
 def bgm_stop():
-    global stopped
-    stopped = True
+    global bgm_stopped
+    bgm_stopped = True
     
-    play.stop()
+    pygame.mixer.stop()
     bgm_box.select_clear(ACTIVE)
+    
+    bgm_status_bar.config(text='')
+    bgm_time_slider.config(value=0)
 
 
 """
 def bgm_next_song():
+    bgm_stop()
+    
     current = bgm_box.curselection()
     next_one = current[0]+1
     
     bgm = bgm_box.get(next_one)
     pygame.mixer.Sound(bgm).play()
     
+    bgm_play_time()
+    
     bgm_box.selection_clear(0, END)
     bgm_box.activate(next_one)
     bgm_box.selection_set(next_one, last=None)
+    
+    bgm_status_bar.config(text='')
+    bgm_time_slider.config(value=0)
 
 
 def bgm_previous_song():
+    bgm_stop()
+    
     current = bgm_box.curselection()
     next_one = current[0]-1
     
     bgm = bgm_box.get(next_one)
     pygame.mixer.Sound(bgm).play()
     
+    bgm_play_time()
+    
     bgm_box.selection_clear(0, END)
     bgm_box.activate(next_one)
     bgm_box.selection_set(next_one, last=None)
+    
+    bgm_status_bar.config(text='')
+    bgm_time_slider.config(value=0)
 """
 
 
 def se_play():
+    se_stop()
+    
+    global se_stopped
+    se_stopped = False
+    
     se = se_box.get(ACTIVE)
     pygame.mixer.music.load(se)
     pygame.mixer.music.play(loops=0)
+    
+    se_status_bar.config(text='')
+    se_time_slider.config(value=0)
+    
+    se_play_time()
+
+
+global se_stopped
+se_stopped = False
 
 
 def se_stop():
+    global se_stopped
+    se_stopped = True
+    
     pygame.mixer.music.stop()
     se_box.select_clear(ACTIVE)
+    
+    se_status_bar.config(text='')
+    se_time_slider.config(value=0)
 
 
 def add_bgm():
@@ -98,10 +213,6 @@ def add_bgm():
 def remove_bgm():
     bgm_stop()
     bgm_box.delete(ANCHOR)
-
-
-def bgm_slide():
-    pass
 
 
 def bgm_volume(x):
@@ -119,10 +230,6 @@ def add_se():
 def remove_se():
     se_stop()
     se_box.delete(ANCHOR)
-
-
-def se_slide():
-    pass
 
 
 def se_volume(x):
@@ -218,11 +325,12 @@ se_stop_btn = Button(se_controls_frame, image=stop_image, command=se_stop)
 se_stop_btn.grid(row=0, column=1, padx=10)
 
 #Create music position slider
-bgm_time_slider = ttk.Scale(bgm_frame, from_=0, to=100, orient=HORIZONTAL, command=bgm_slide, value=0, length=360)
+bgm_time_slider = ttk.Scale(bgm_frame, from_=0, to=100, orient=HORIZONTAL, value=0, length=360)
 bgm_time_slider.grid(row=3, column=0, padx=10)
 
-se_time_slider = ttk.Scale(se_frame, from_=0, to=100, orient=HORIZONTAL, command=se_slide, value=0, length=360)
+se_time_slider = ttk.Scale(se_frame, from_=0, to=100, orient=HORIZONTAL, value=0, length=360)
 se_time_slider.grid(row=3, column=0, padx=10)
+
 
 #Create volume slider
 bgm_volume_slider = ttk.Scale(bgm_volume_frame, from_=0, to=1, orient=VERTICAL, command=bgm_volume, value=1, length=150)
@@ -231,6 +339,7 @@ bgm_volume_slider.pack()
 se_volume_slider = ttk.Scale(se_volume_frame, from_=0, to=1, orient=VERTICAL, command=se_volume, value=1, length=150)
 se_volume_slider.pack()
 
+
 #Create show volume label
 show_bgm_volume = Label(bgm_volume_frame, text='100%')
 show_bgm_volume.pack(pady=5)
@@ -238,12 +347,14 @@ show_bgm_volume.pack(pady=5)
 show_se_volume = Label(se_volume_frame, text='100%')
 show_se_volume.pack(pady=5)
 
+
 #Create ststus bar
 bgm_status_bar = Label(bgm_frame, text='', bd=1, relief=GROOVE, anchor=E)
 bgm_status_bar.grid(row=4, pady=10)
 
 se_status_bar = Label(se_frame, text='', bd=1, relief=GROOVE, anchor=E)
 se_status_bar.grid(row=4, pady=10)
+
 
 #Create designer label
 designer = Label(root, text="設計:張詠翔", font=('標楷體', 12))
