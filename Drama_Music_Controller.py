@@ -5,6 +5,7 @@ Designer: 張詠翔
 """
 from tkinter import *
 import tkinter.ttk as ttk
+from tkinter import filedialog
 
 #GUI window setting
 root = Tk()
@@ -38,12 +39,19 @@ def se_play():
     pass
 
 
-def add_bgm():
+def se_stop():
     pass
+
+
+def add_bgm():
+    bgms = filedialog.askopenfilenames(initialdir='./music/', title="Choose a BGM", filetypes=(("mp3 Files", "*.mp3"), ))
+    for bgm in bgms:
+        bgm_box.insert(END, bgm)
 
 
 def remove_bgm():
-    pass
+    bgm_stop()
+    bgm_box.delete(ANCHOR)
 
 
 def bgm_slide():
@@ -55,11 +63,14 @@ def bgm_volume():
 
 
 def add_se():
-    pass
+    ses = filedialog.askopenfilenames(initialdir='./music/', title="Choose a SE", filetypes=(("mp3 Files", "*.mp3"), ))
+    for se in ses:
+        se_box.insert(END, se)
 
 
 def remove_se():
-    pass
+    se_stop()
+    se_box.delete(ANCHOR)
 
 
 def se_slide():
@@ -152,6 +163,9 @@ bgm_previous_btn.grid(row=0, column=4, padx=5)
 
 se_play_btn = Button(se_controls_frame, image=play_image, command=se_play)
 se_play_btn.grid(row=0, column=0, padx=10)
+
+se_stop_btn = Button(se_controls_frame, image=stop_image, command=se_stop)
+se_stop_btn.grid(row=0, column=1, padx=10)
 
 #Create music position slider
 bgm_time_slider = ttk.Scale(bgm_frame, from_=0, to=100, orient=HORIZONTAL, command=bgm_slide, value=0, length=360)
