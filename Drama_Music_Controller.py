@@ -6,41 +6,85 @@ Designer: 張詠翔
 from tkinter import *
 import tkinter.ttk as ttk
 from tkinter import filedialog
+import pygame
 
 #GUI window setting
 root = Tk()
 root.title("Drama Music Controller")
 root.geometry("1050x500")
 
+#Init pygame mixer for play music
+pygame.mixer.init()
+
 
 def bgm_play():
-    pass
+    bgm = bgm_box.get(ACTIVE)
+    pygame.mixer.Sound(bgm).play()
 
 
-def bgm_pause():
-    pass
+global paused
+paused = False
+
+
+def bgm_pause(is_paused):
+    global paused
+    paused = is_paused
+    
+    if paused:
+        pygame.mixer.unpause()
+        paused = False
+    else:
+        pygame.mixer.pause()
+        paused = True
+
+
+global stopped
+stopped = False
 
 
 def bgm_stop():
-    pass
+    global stopped
+    stopped = True
+    
+    pygame.mixer.stop()
+    bgm_box.select_clear(ACTIVE)
 
 
 """
 def bgm_next_song():
-    pass
+    current = bgm_box.curselection()
+    next_one = current[0]+1
+    
+    bgm = bgm_box.get(next_one)
+    pygame.mixer.Sound(bgm).play()
+    
+    bgm_box.selection_clear(0, END)
+    bgm_box.activate(next_one)
+    bgm_box.selection_set(next_one, last=None)
 
 
 def bgm_previous_song():
-    pass
+    current = bgm_box.curselection()
+    next_one = current[0]-1
+    
+    bgm = bgm_box.get(next_one)
+    pygame.mixer.Sound(bgm).play()
+    
+    bgm_box.selection_clear(0, END)
+    bgm_box.activate(next_one)
+    bgm_box.selection_set(next_one, last=None)
 """
 
 
 def se_play():
-    pass
+    se = se_box.get(ACTIVE)
+    pygame.mixer.music.load(se)
+    pygame.mixer.music.play(loops=0)
 
 
 def se_stop():
-    pass
+    pygame.mixer.music.stop()
+    se_box.select_clear(ACTIVE)
 
 
 def add_bgm():
