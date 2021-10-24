@@ -13,7 +13,7 @@ from mutagen.mp3 import MP3
 #GUI window setting
 root = Tk()
 root.title("抓馬盃音控軟體")
-root.geometry("1050x500")
+root.geometry("1050x550")
 
 #Init pygame mixer for play music
 pygame.mixer.init()
@@ -423,9 +423,25 @@ bgm_status_bar.grid(row=4, pady=10)
 se_status_bar = Label(se_frame, text='', bd=1, relief=GROOVE, anchor=E)
 se_status_bar.grid(row=4, pady=10)
 
+#Create schedule frame
+schedule_frame = LabelFrame(root, text='排程')
+schedule_frame.pack(ipadx=30, ipady=10)
+
+#Create schedule controller
+schedule_btn = Button(schedule_frame, text='排程', font=('標楷體', 16))
+schedule_btn.pack(side='left', padx=10)
+
+start_btn = Button(schedule_frame, text='開始', font=('標楷體', 16))
+start_btn.pack(side='left', padx=10)
+
+schedule_time_slider = ttk.Scale(schedule_frame, from_=0, to=100, orient=HORIZONTAL, value=0, length=600)
+schedule_time_slider.pack(side='left', padx=50)
+
+schedule_status_bar = Label(schedule_frame, text='', bd=1, relief=GROOVE, anchor=E)
+schedule_status_bar.pack(side='left', padx=10)
 
 #Create designer label
-designer = Label(root, text="設計:張詠翔", font=('標楷體', 12))
-designer.pack(side='right')
+designer = Label(root, text="設計:張詠翔", font=('標楷體', 12), anchor=E)
+designer.pack(fill=X, side=BOTTOM)
 
 root.mainloop()
