@@ -26,7 +26,7 @@ def bgm_play_time():
     current_time = play.get_length()
     current_time_f = time.strftime('%M:%S', time.gmtime(int(current_time)))
     
-    song = bgm_box.get(ACTIVE)
+    song = './music/' + bgm_box.get(ACTIVE) + '.mp3'
     song_mut = MP3(song)
     
     song_length = song_mut.info.length
@@ -60,7 +60,7 @@ def se_play_time():
     current_time = pygame.mixer.music.get_pos() / 1000
     current_time_f = time.strftime('%M:%S', time.gmtime(int(current_time)))
     
-    song = se_box.get(ACTIVE)
+    song = './music/' + se_box.get(ACTIVE) + '.mp3'
     song_mut = MP3(song)
     
     song_length = song_mut.info.length
@@ -91,7 +91,7 @@ def bgm_play():
     global bgm_stopped
     bgm_stopped = False
     
-    bgm = bgm_box.get(ACTIVE)
+    bgm = './music/' + bgm_box.get(ACTIVE) + '.mp3'
     global play
     play = pygame.mixer.Sound(bgm)
     play.play()
@@ -179,7 +179,7 @@ def se_play():
     global se_stopped
     se_stopped = False
     
-    se = se_box.get(ACTIVE)
+    se = './music/' + se_box.get(ACTIVE) + '.mp3'
     pygame.mixer.music.load(se)
     pygame.mixer.music.play(loops=0)
     
@@ -207,6 +207,8 @@ def se_stop():
 def add_bgm():
     bgms = filedialog.askopenfilenames(initialdir='./music/', title="Choose a BGM", filetypes=(("mp3 Files", "*.mp3"), ))
     for bgm in bgms:
+        tem = bgm.split('/')
+        bgm = tem[-1][:-4]
         bgm_box.insert(END, bgm)
         BGM.append(bgm)
     file = open('./music.dat', mode='w')
@@ -243,6 +245,8 @@ def bgm_volume(x):
 def add_se():
     ses = filedialog.askopenfilenames(initialdir='./music/', title="Choose a SE", filetypes=(("mp3 Files", "*.mp3"), ))
     for se in ses:
+        tem = se.split('/')
+        se = tem[-1][:-4]
         se_box.insert(END, se)
         SE.append(se)
     file = open('./music.dat', mode='w')
