@@ -19,7 +19,9 @@ pygame.mixer.init()
 
 def bgm_play():
     bgm = bgm_box.get(ACTIVE)
-    pygame.mixer.Sound(bgm).play()
+    global play
+    play = pygame.mixer.Sound(bgm)
+    play.play()
 
 
 global paused
@@ -46,7 +48,7 @@ def bgm_stop():
     global stopped
     stopped = True
     
-    pygame.mixer.stop()
+    play.stop()
     bgm_box.select_clear(ACTIVE)
 
 
@@ -102,8 +104,10 @@ def bgm_slide():
     pass
 
 
-def bgm_volume():
-    pass
+def bgm_volume(x):
+    play.set_volume(bgm_volume_slider.get())
+    current_volume = play.get_volume()
+    show_bgm_volume.config(text=f'{int(current_volume*100)}%')
 
 
 def add_se():
@@ -121,8 +125,10 @@ def se_slide():
     pass
 
 
-def se_volume():
-    pass
+def se_volume(x):
+    pygame.mixer.music.set_volume(se_volume_slider.get())
+    current_volume = pygame.mixer.music.get_volume()
+    show_se_volume.config(text=f'{int(current_volume*100)}%')
 
 
 #Create title
