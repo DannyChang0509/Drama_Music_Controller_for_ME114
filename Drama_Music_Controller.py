@@ -5,6 +5,7 @@ Designer: 張詠翔
 """
 from tkinter import *
 import tkinter.ttk as ttk
+import tkinter.messagebox
 from tkinter import filedialog
 import pygame
 import time
@@ -19,79 +20,71 @@ root.geometry("1050x550")
 pygame.mixer.init()
 
 
-def bgm_play_time():
+def bgm_play_time(x, n):
     if bgm_stopped:
         return
     
-    current_time = play.get_length()
+    current_time = x
     current_time_f = time.strftime('%M:%S', time.gmtime(int(current_time)))
     
-    song = './music/' + bgm_box.get(ACTIVE) + '.mp3'
+    song = './music/' + bgm_box.get(n) + '.mp3'
     song_mut = MP3(song)
-    
+
     song_length = song_mut.info.length
     song_length_f = time.strftime('%M:%S', time.gmtime(song_length))
-    
-    current_time += 1
     
     if int(bgm_time_slider.get()) == int(song_length):
         bgm_status_bar.config(text=f'{song_length_f} of {song_length_f}')
-        bgm_stop()
-    elif paused:
+    elif bgm_paused:
         pass
-    elif int(bgm_time_slider.get()) == int(current_time):
-        bgm_time_slider.config(to=int(song_length), value=int(current_time))
     else:
-        bgm_time_slider.config(to=int(song_length), value=int(bgm_time_slider.get()))
+        bgm_time_slider.config(to=int(song_length), value=int(current_time))
         
-        current_time_f = time.strftime('%M:%S', time.gmtime(int(bgm_time_slider.get())))
-        
-        bgm_time_slider.config(to=int(song_length), value=int(bgm_time_slider.get())+1)
+        current_time_f = time.strftime('%M:%S', time.gmtime(int(current_time)))
     
         bgm_status_bar.config(text=f'{current_time_f} of {song_length_f}')
     
-    bgm_status_bar.after(1000, bgm_play_time)
+        current_time += 1
+    
+    bgm_status_bar.after(1000, lambda: bgm_play_time(current_time, n))
 
 
-def se_play_time():
+def se_play_time(x, n):
     if se_stopped:
         return
     
-    current_time = pygame.mixer.music.get_pos() / 1000
-    current_time_f = time.strftime('%M:%S', time.gmtime(int(current_time)))
+    current_time = x
+    current_time_f = time.strftime('%M:%S', time.gmtime(current_time))
     
-    song = './music/' + se_box.get(ACTIVE) + '.mp3'
+    song = './music/' + se_box.get(n) + '.mp3'
     song_mut = MP3(song)
     
     song_length = song_mut.info.length
     song_length_f = time.strftime('%M:%S', time.gmtime(song_length))
     
-    current_time += 1
-    
     if int(se_time_slider.get()) == int(song_length):
         se_status_bar.config(text=f'{song_length_f} of {song_length_f}')
-        se_stop()
-    elif int(se_time_slider.get()) == int(current_time):
-        se_time_slider.config(to=int(song_length), value=int(current_time))
     else:
-        se_time_slider.config(to=int(song_length), value=int(se_time_slider.get()))
+        se_time_slider.config(to=int(song_length), value=current_time)
         
-        current_time_f = time.strftime('%M:%S', time.gmtime(int(se_time_slider.get())))
-        
-        se_time_slider.config(to=int(song_length), value=int(se_time_slider.get())+1)
-    
+        current_time_f = time.strftime('%M:%S', time.gmtime(current_time))
+
         se_status_bar.config(text=f'{current_time_f} of {song_length_f}')
     
-    se_status_bar.after(1000, se_play_time)
+        current_time += 1
+    
+    se_status_bar.after(1000, lambda: se_play_time(current_time, n))
 
 
-def bgm_play():
-    bgm_stop()
+def bgm_play(n):
+    pygame.mixer.stop()
     
     global bgm_stopped
     bgm_stopped = False
     
-    bgm = './music/' + bgm_box.get(ACTIVE) + '.mp3'
+    if n == -1:
+        n = ACTIVE
+    bgm = './music/' + bgm_box.get(n) + '.mp3'
     global play
     play = pygame.mixer.Sound(bgm)
     play.play()
@@ -99,23 +92,23 @@ def bgm_play():
     bgm_status_bar.config(text='')
     bgm_time_slider.config(value=0)
     
-    bgm_play_time()
+    bgm_play_time(0, n)
 
 
-global paused
-paused = False
+global bgm_paused
+bgm_paused = False
 
 
 def bgm_pause(is_paused):
-    global paused
-    paused = is_paused
+    global bgm_paused
+    bgm_paused = is_paused
     
-    if paused:
+    if bgm_paused:
         pygame.mixer.unpause()
-        paused = False
+        bgm_paused = False
     else:
         pygame.mixer.pause()
-        paused = True
+        bgm_paused = True
 
 
 global bgm_stopped
@@ -173,20 +166,22 @@ def bgm_previous_song():
 """
 
 
-def se_play():
-    se_stop()
+def se_play(n):
+    pygame.mixer.music.stop()
     
     global se_stopped
     se_stopped = False
     
-    se = './music/' + se_box.get(ACTIVE) + '.mp3'
+    if n == -1:
+        n = ACTIVE
+    se = './music/' + se_box.get(n) + '.mp3'
     pygame.mixer.music.load(se)
     pygame.mixer.music.play(loops=0)
     
     se_status_bar.config(text='')
     se_time_slider.config(value=0)
     
-    se_play_time()
+    se_play_time(0, n)
 
 
 global se_stopped
@@ -222,18 +217,29 @@ def add_bgm():
 
 
 def remove_bgm():
-    bgm_stop()
-    BGM.remove(bgm_box.get(ACTIVE))
-    bgm_box.delete(ANCHOR)
+    global bgm_stopped
+    bgm_stopped = True
     
-    file = open('./music.dat', mode='w')
-    file.write('BGM\n')
-    for s in BGM:
-        file.write(s+'\n')
-    file.write('SE\n')
-    for s in SE:
-        file.write(s+'\n')
-    file.close()
+    pygame.mixer.stop()
+    
+    bgm_status_bar.config(text='')
+    bgm_time_slider.config(value=0)
+    
+    if bgm_box.curselection():
+        bgm_stop()
+        BGM.remove(bgm_box.get(ACTIVE))
+        bgm_box.delete(ANCHOR)
+        
+        file = open('./music.dat', mode='w')
+        file.write('BGM\n')
+        for s in BGM:
+            file.write(s+'\n')
+        file.write('SE\n')
+        for s in SE:
+            file.write(s+'\n')
+        file.close()
+    else:
+        messagebox.showwarning('提示', '請選擇欲刪除之音樂')
 
 
 def bgm_volume(x):
@@ -260,18 +266,28 @@ def add_se():
 
 
 def remove_se():
-    se_stop()
-    SE.remove(se_box.get(ACTIVE))
-    se_box.delete(ANCHOR)
+    global se_stopped
+    se_stopped = True
     
-    file = open('./music.dat', mode='w')
-    file.write('BGM\n')
-    for s in BGM:
-        file.write(s+'\n')
-    file.write('SE\n')
-    for s in SE:
-        file.write(s+'\n')
-    file.close()
+    pygame.mixer.music.stop()
+    
+    se_status_bar.config(text='')
+    se_time_slider.config(value=0)
+    
+    if se_box.curselection():
+        SE.remove(se_box.get(ACTIVE))
+        se_box.delete(ANCHOR)
+        
+        file = open('./music.dat', mode='w')
+        file.write('BGM\n')
+        for s in BGM:
+            file.write(s+'\n')
+        file.write('SE\n')
+        for s in SE:
+            file.write(s+'\n')
+        file.close()
+    else:
+        messagebox.showwarning('提示', '請選擇欲刪除之音效')
 
 
 def se_volume(x):
@@ -354,7 +370,6 @@ pause_image = PhotoImage(file='./img/pause.png').subsample(3)
 stop_image = PhotoImage(file='./img/stop.png').subsample(3)
 add_image = PhotoImage(file='./img/add.png').subsample(10)
 remove_image = PhotoImage(file='./img/remove.png').subsample(10)
-edit_image = PhotoImage(file='./img/edit.png').subsample(10)
 
 #Create music managers
 add_bgm_btn = Button(bgm_managers_frame, image=add_image, command=add_bgm)
@@ -370,10 +385,10 @@ remove_se_btn = Button(se_managers_frame, image=remove_image, command=remove_se)
 remove_se_btn.grid(row=0, column=1, padx=3)
 
 #Create controllers
-bgm_play_btn = Button(bgm_controls_frame, image=play_image, command=bgm_play)
+bgm_play_btn = Button(bgm_controls_frame, image=play_image, command=lambda: bgm_play(-1))
 bgm_play_btn.grid(row=0, column=1, padx=10)
 
-bgm_pause_btn = Button(bgm_controls_frame, image=pause_image, command=lambda: bgm_pause(paused))
+bgm_pause_btn = Button(bgm_controls_frame, image=pause_image, command=lambda: bgm_pause(bgm_paused))
 bgm_pause_btn.grid(row=0, column=0, padx=10)
 
 bgm_stop_btn = Button(bgm_controls_frame, image=stop_image, command=bgm_stop)
@@ -387,7 +402,7 @@ bgm_previous_btn = Button(bgm_controls_frame, text="Previous", command=bgm_previ
 bgm_previous_btn.grid(row=0, column=4, padx=5)
 """
 
-se_play_btn = Button(se_controls_frame, image=play_image, command=se_play)
+se_play_btn = Button(se_controls_frame, image=play_image, command=lambda: se_play(-1))
 se_play_btn.grid(row=0, column=0, padx=10)
 
 se_stop_btn = Button(se_controls_frame, image=stop_image, command=se_stop)
@@ -455,29 +470,6 @@ def schedule():
     confirm_frame = Frame(schedule_window)
     confirm_frame.pack(pady=10)
     
-    #Create controllers
-    minute = Entry(controllers_frame, show=None, font=('標楷體', 12), width=3)
-    minute.grid(row=0, column=0)
-    
-    colon = Label(controllers_frame, text=':', font=('標楷體', 12))
-    colon.grid(row=0, column=1)
-    
-    second = Entry(controllers_frame, show=None, font=('標楷體', 12), width=3)
-    second.grid(row=0, column=2)
-    
-    music = ttk.Combobox(controllers_frame, value=[])
-    music.grid(row=0, column=3, padx=10)
-    
-    check_btn = Button(controllers_frame, text='確定')
-    check_btn.grid(row=0, column=4)
-    
-    #Create managers
-    remove_btn = Button(manager_frame, image=remove_image)
-    remove_btn.grid(row=0, column=0)
-    
-    edit_btn = Button(manager_frame, image=edit_image)
-    edit_btn.grid(row=0, column=1)
-    
     #Create main box
     time_box = Listbox(main_frame, width=5)
     time_box.grid(row=1, column=0, padx=10)
@@ -485,28 +477,257 @@ def schedule():
     music_box = Listbox(main_frame, width=30)
     music_box.grid(row=1, column=1, padx=10)
     
+    #Create list: [time_min, time_sec, music_name]
+    file = open('./schedule.dat', mode='r')
+
+    schedules = file.readlines()
+
+    schedule_list = []
+    
+    for s in schedules:
+        schedule_list.append(s.split())
+        time_min, time_sec, music_name = schedule_list[-1]
+        time_box.insert(END, f'{time_min}:{time_sec}')
+        music_box.insert(END, music_name)
+    
+    file.close()
+    
+    
+    def check():
+        minute_g = minute.get()
+        if len(minute_g) < 2:
+            minute_g = '0' + minute_g
+        else:
+            minute_g = minute.get()
+        second_g = second.get()
+        if len(second_g) < 2:
+            second_g = '0' + second_g
+        else:
+            second_g = second.get()
+            
+        schedule_list.append([minute_g, second_g, music.get()])
+        
+        if schedule_list.count(schedule_list[-1]) > 1:
+            messagebox.showerror('錯誤', '程序重複')
+            schedule_list.pop(-1)
+        else:
+            #Sorting
+            schedule_list.sort(key= lambda x:x[1])
+            schedule_list.sort(key= lambda x:x[0])
+            
+            time_box.delete(0, 'end')
+            music_box.delete(0, 'end')
+            
+            file = open('./schedule.dat', mode='w')
+            for time_min, time_sec, music_name in schedule_list:
+                time_box.insert(END, f'{time_min}:{time_sec}')
+                music_box.insert(END, music_name)
+                file.write(f'{time_min} {time_sec} {music_name}\n')
+            file.close()
+    
+    
+    #Create controllers
+    minute = Spinbox(controllers_frame, from_=0, to=59, width=2, wrap=True)
+    minute.grid(row=0, column=0)
+    
+    colon = Label(controllers_frame, text=':', font=('標楷體', 12))
+    colon.grid(row=0, column=1)
+    
+    second = Spinbox(controllers_frame, from_=0, to=59, width=2, wrap=True)
+    second.grid(row=0, column=2)
+    
+    music = ttk.Combobox(controllers_frame)
+    music.grid(row=0, column=3, padx=10)
+    
+    check_btn = Button(controllers_frame, text='確定', command=check)
+    check_btn.grid(row=0, column=4)
+    
+    #Reset combobox
+    music['value'] = BGM + SE
+    
+    
+    def delete():
+        def delete_():
+            time_box.delete(anchor)
+            music_box.delete(anchor)
+            schedule_list.pop(anchor[0])
+            
+            file = open('./schedule.dat', mode='w')
+            for time_min, time_sec, music_name in schedule_list:
+                file.write(f'{time_min} {time_sec} {music_name}\n')
+            file.close()
+        
+        if music_box.curselection():
+            anchor = music_box.curselection()
+            delete_()
+        elif time_box.curselection():
+            anchor = time_box.curselection()
+            delete_()
+        else:
+            messagebox.showwarning('提示', '請選擇欲刪除之程序')
+    
+    
+    #Create managers
+    remove_btn = Button(manager_frame, image=remove_image, command=delete)
+    remove_btn.grid(row=0, column=0)
+    
+    
+    def reset():
+        time_box.delete(0, 'end')
+        music_box.delete(0, 'end')
+        schedule_list.clear()
+        file = open('./schedule.dat', mode='r+')
+        file.truncate(0)
+        file.close()
+    
+    
+    def confirm():
+        schedule_window.destroy()
+    
+    
     #Create confirm btns
-    confirm_btn = Button(confirm_frame, text='完成')
+    confirm_btn = Button(confirm_frame, text='完成', command=confirm)
     confirm_btn.grid(row=0, column=0, padx=10)
     
-    reset_btn = Button(confirm_frame, text='重設')
+    reset_btn = Button(confirm_frame, text='重設', command=reset)
     reset_btn.grid(row=0, column=1, padx=10)
+
+
+def schedule_play_time(x):
+    if len(time_list) == 0:
+        messagebox.showwarning('警告', '請排程')
+        return
+    
+    if stopped:
+        schedule_time_slider.config(value=0)
+        schedule_status_bar.config(text='')
+        return
+    
+    current_time = x
+    current_time_f = time.strftime('%M:%S', time.gmtime(current_time))
+    
+    for i in range(len(music_name_list)-1, -1, -1):
+        if music_name_list[i] in BGM:
+            last_song = './music/' + music_name_list[i] + '.mp3'
+            break
+        
+    last_song_mut = MP3(last_song)
+    
+    last_song_length = last_song_mut.info.length
+    
+    tem = time_list[-1].split(':')
+    length = int(tem[i])*60 + int(tem[i]) + last_song_length
+    length_f = time.strftime('%M:%S', time.gmtime(length))
+    
+    if int(schedule_time_slider.get()) == int(length):
+        schedule_status_bar.config(text=f'{length_f} of {length_f}')
+    elif paused or bgm_paused:
+        pass
+    else:
+        schedule_time_slider.config(to=int(length), value=current_time)
+        
+        current_time_f = time.strftime('%M:%S', time.gmtime(current_time))
+    
+        schedule_status_bar.config(text=f'{current_time_f} of {length_f}')
+        
+        if current_time_f in time_list:
+            if music_name_list[time_list.index(current_time_f)] in BGM:
+                bgm_stop()
+                
+                bgm_status_bar.config(text='')
+                bgm_time_slider.config(value=0)
+                bgm_box.select_clear(0, END)
+                
+                for n in range(bgm_box.size()):
+                    if bgm_box.get(n) == music_name_list[time_list.index(current_time_f)]:
+                        bgm_box.select_set(n)
+                        bgm_play(n)
+                        break
+            elif music_name_list[time_list.index(current_time_f)] in SE:
+                se_stop()
+                
+                se_status_bar.config(text='')
+                se_time_slider.config(value=0)
+                se_box.select_clear(0, END)
+                
+                for n in range(se_box.size()):
+                    if se_box.get(n) == music_name_list[time_list.index(current_time_f)]:
+                        se_box.select_set(n)
+                        se_play(n)
+                        break
+        
+        current_time += 1
+    
+    schedule_status_bar.after(1000, lambda: schedule_play_time(current_time))
+
+
+def start():
+    global stopped
+    stopped = False
+    
+    global paused
+    paused = False
+    
+    #Read schedule
+    file = open('./schedule.dat', mode='r')
+
+    schedules = file.readlines()
+    
+    global time_list, music_name_list
+    time_list = []
+    music_name_list = []
+    
+    for s in schedules:
+        tem = s.split()
+        time_list.append(tem[0]+':'+tem[1])
+        music_name_list.append(tem[2])
+    
+    file.close()
+    
+    schedule_play_time(0)
+
+
+global stopped
+stopped = False
+
+
+def stop():
+    bgm_stop()
+    se_stop()
+    global stopped
+    stopped = True
+
+
+global paused
+paused = False
+
+
+def pause(is_paused):
+    bgm_pause(is_paused)
+    
+    global paused
+    paused = is_paused
+    
+    if paused:
+        paused = False
+    else:
+        paused = True
 
 
 #Create schedule controller
 schedule_btn = Button(schedule_frame, text='排程', font=('標楷體', 16), command=schedule)
 schedule_btn.pack(side='left', padx=10)
 
-pause_btn = Button(schedule_frame, image=pause_image, font=('標楷體', 16))
+pause_btn = Button(schedule_frame, image=pause_image, font=('標楷體', 16), command=lambda: pause(paused))
 pause_btn.pack(side='left', padx=10)
 
-start_btn = Button(schedule_frame, image=play_image, font=('標楷體', 16))
+start_btn = Button(schedule_frame, image=play_image, font=('標楷體', 16), command=start)
 start_btn.pack(side='left', padx=10)
 
-stop_btn = Button(schedule_frame, image=stop_image, font=('標楷體', 16))
+stop_btn = Button(schedule_frame, image=stop_image, font=('標楷體', 16), command=stop)
 stop_btn.pack(side='left', padx=10)
 
-schedule_time_slider = ttk.Scale(schedule_frame, from_=0, to=100, orient=HORIZONTAL, value=0, length=600)
+schedule_time_slider = ttk.Scale(schedule_frame, from_=0, to=100, orient=HORIZONTAL, value=0, length=500)
 schedule_time_slider.pack(side='left', padx=30)
 
 schedule_status_bar = Label(schedule_frame, text='', bd=1, relief=GROOVE, anchor=E)
